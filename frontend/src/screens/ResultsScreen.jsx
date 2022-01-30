@@ -2,24 +2,22 @@ import React, { useEffect, useState } from "react";
 import { url } from "../globalUrl";
 import { Spin } from "antd";
 import { partyIcons, partyNames } from "./CandidatesScreen";
+import { utils } from 'ethers';
+import { Contract } from '@ethersproject/contracts'
+import { useContractCall, useContractFunction } from '@usedapp/core'
+import abi from "../smartContract/abi.json"
+import { address } from "../smartContract/address"
 
 export const ResultsScreen = () => {
-  const [results, setResults] = useState([]);
+  const wethInterface = new utils.Interface(abi)
+  const wethContractAddress = address
 
-  useEffect(() => {
-    fetch(url + "/results", {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        console.log("result", result);
-        setResults(result);
-      });
-  }, []);
+  const [results] = useContractCall({
+    abi: wethInterface,
+    address: wethContractAddress,
+    method: "retrieveCandidates",
+    args: [],
+  }) ?? [];
 
   return (
     <>
@@ -44,14 +42,14 @@ export const ResultsScreen = () => {
               </div>
             </div>
 
-            {results.length === 0 ? (
+            {!results || results.length === 0 ? (
               <div className="spinner">
                 <Spin size="large" />
               </div>
             ) : (
               <>
-                {results.map((result) => (
-                  <div className="candidates__card">
+                {results.map((result, index) => (
+                  <div className="candidates__card" key={index}>
                     <div className="row_3">
                       <img
                         className="party__icon"
@@ -66,7 +64,7 @@ export const ResultsScreen = () => {
                       <h5>{partyNames[result?.[2]]}</h5>
                     </div>
                     <div className="row_3" style={{ justifyContent: "center" }}>
-                      <h5>{result?.[3]}</h5>
+                      <h5>{parseInt(result?.[3]._hex.toString())}</h5>
                     </div>
                   </div>
                 ))}
